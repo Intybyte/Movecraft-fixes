@@ -50,7 +50,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -343,7 +342,7 @@ public class DetectionTask implements Supplier<Effect> {
         @Override
         public void run() {
             MovecraftLocation probe;
-            LinkedList<MovecraftLocation> directionalList = new LinkedList<>();
+            LinkedList<Block> directionalList = new LinkedList<>();
 
             while((probe = currentFrontier.poll()) != null) {
                 visitedMaterials.computeIfAbsent(movecraftWorld.getMaterial(probe), Functions.forSupplier(ConcurrentLinkedDeque::new)).add(probe);
@@ -362,19 +361,10 @@ public class DetectionTask implements Supplier<Effect> {
                     return;
                 }
 
+                //get directional blocks and process them later
                 Block b = probe.toBukkit(world).getBlock();
-                boolean blockFacingCraft = true;
-
-                if (b instanceof Directional directional) {
-                    Block relativeBlock = b.getRelative(directional.getFacing());
-                    MovecraftLocation relativeLoc = new MovecraftLocation(relativeBlock.getX(), relativeBlock.getY(), relativeBlock.getZ());
-
-                    if (!legal.contains(relativeLoc)) {
-                        blockFacingCraft = false; // Invalidate block if it's not facing the craft
-                    }
-                }
-
-                if (!blockFacingCraft) {
+                if (b instanceof Directional) {
+                    directionalList.add(b);
                     continue;
                 }
 
@@ -386,6 +376,30 @@ public class DetectionTask implements Supplier<Effect> {
                 materials.computeIfAbsent(movecraftWorld.getMaterial(probe), Functions.forSupplier(ConcurrentLinkedDeque::new)).add(probe);
                 for (MovecraftLocation shift : SHIFTS) {
                     var shifted = probe.add(shift);
+                    if (visited.add(shifted))
+                        nextFrontier.add(shifted);
+                }
+            }
+
+            for (Block b : directionalList) {
+                MovecraftLocation loc = new MovecraftLocation(b.getLocation());
+                Directional d = (Directional) b;
+
+                Block blockToCheck = b.getRelative(d.getFacing());
+                MovecraftLocation locToCheck = new MovecraftLocation(blockToCheck.getLocation());
+
+                if (!legal.contains(locToCheck)) {
+                    continue;
+                }
+
+                legal.add(loc);
+                if (Tags.FLUID.contains(movecraftWorld.getMaterial(loc)))
+                    fluid.add(loc);
+
+                size.increment();
+                materials.computeIfAbsent(movecraftWorld.getMaterial(loc), Functions.forSupplier(ConcurrentLinkedDeque::new)).add(loc);
+                for (MovecraftLocation shift : SHIFTS) {
+                    var shifted = loc.add(shift);
                     if (visited.add(shifted))
                         nextFrontier.add(shifted);
                 }

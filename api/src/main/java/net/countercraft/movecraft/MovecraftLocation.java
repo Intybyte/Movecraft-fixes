@@ -17,15 +17,11 @@
 
 package net.countercraft.movecraft;
 
-import com.google.common.primitives.UnsignedInteger;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
 import static net.countercraft.movecraft.util.BitMath.mask;
-import static net.countercraft.movecraft.util.BitMath.unpackX;
-import static net.countercraft.movecraft.util.BitMath.unpackY;
-import static net.countercraft.movecraft.util.BitMath.unpackZ;
 
 /**
  * Represents a Block aligned coordinate triplet.
@@ -37,6 +33,12 @@ final public class MovecraftLocation implements Comparable<MovecraftLocation>{
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public MovecraftLocation(Location l) {
+        this.x = l.getBlockX();
+        this.y = l.getBlockY();
+        this.z = l.getBlockZ();
     }
 
     public int getX() {
