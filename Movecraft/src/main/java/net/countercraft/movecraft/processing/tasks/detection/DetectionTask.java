@@ -40,8 +40,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.Directional;
 import org.bukkit.entity.Player;
+import org.bukkit.material.Attachable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -342,7 +342,7 @@ public class DetectionTask implements Supplier<Effect> {
         @Override
         public void run() {
             MovecraftLocation probe;
-            LinkedList<Block> directionalList = new LinkedList<>();
+            LinkedList<Block> attachableList = new LinkedList<>();
 
             while((probe = currentFrontier.poll()) != null) {
                 visitedMaterials.computeIfAbsent(movecraftWorld.getMaterial(probe), Functions.forSupplier(ConcurrentLinkedDeque::new)).add(probe);
@@ -363,8 +363,8 @@ public class DetectionTask implements Supplier<Effect> {
 
                 //get directional blocks and process them later
                 Block b = probe.toBukkit(world).getBlock();
-                if (b instanceof Directional) {
-                    directionalList.add(b);
+                if (b instanceof Attachable) {
+                    attachableList.add(b);
                     continue;
                 }
 
@@ -381,11 +381,11 @@ public class DetectionTask implements Supplier<Effect> {
                 }
             }
 
-            for (Block b : directionalList) {
+            for (Block b : attachableList) {
                 MovecraftLocation loc = new MovecraftLocation(b.getLocation());
-                Directional d = (Directional) b;
+                Attachable d = (Attachable) b;
 
-                Block blockToCheck = b.getRelative(d.getFacing());
+                Block blockToCheck = b.getRelative(d.getAttachedFace());
                 MovecraftLocation locToCheck = new MovecraftLocation(blockToCheck.getLocation());
 
                 if (!legal.contains(locToCheck)) {
