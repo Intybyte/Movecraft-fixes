@@ -358,11 +358,12 @@ public class DetectionTask implements Supplier<Effect> {
                 if (!result.isSucess()) {
                     illegal.add(probe);
                     audience.sendMessage(Component.text(result.getMessage()));
-                    return;
+                    continue;
                 }
 
                 //get directional blocks and process them later
                 Block b = probe.toBukkit(world).getBlock();
+
                 if (b instanceof Attachable) {
                     attachableList.add(b);
                     continue;
@@ -381,7 +382,10 @@ public class DetectionTask implements Supplier<Effect> {
                 }
             }
 
+            Bukkit.getLogger().info("Attachables detected: ");
             for (Block b : attachableList) {
+                Bukkit.getLogger().info(b.toString());
+
                 MovecraftLocation loc = new MovecraftLocation(b.getLocation());
                 Attachable d = (Attachable) b;
 
@@ -389,8 +393,10 @@ public class DetectionTask implements Supplier<Effect> {
                 MovecraftLocation locToCheck = new MovecraftLocation(blockToCheck.getLocation());
 
                 if (!legal.contains(locToCheck)) {
+                    Bukkit.getLogger().info("Not Contained!");
                     continue;
                 }
+                Bukkit.getLogger().info("Contained!");
 
                 legal.add(loc);
                 if (Tags.FLUID.contains(movecraftWorld.getMaterial(loc)))
